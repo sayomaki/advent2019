@@ -76,8 +76,8 @@ layers.forEach((layer) => {
 let out = '';
 final.forEach(h => {
   h.forEach(w => {
-    if (w == '1') out += 'X';
-    if (w == '0') out += '.';
+    if (w == '1') out += '░';
+    if (w == '0') out += '█';
     if (w == '2') out += ' ';
   });
   out += '\n';
