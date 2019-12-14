@@ -10,14 +10,6 @@ The 2210736 ORE-per-FUEL example could produce 460664 FUEL.
 Given 1 trillion ORE, what is the maximum amount of FUEL you can produce?
 */
 
-/* 
-  ================================================= 
-        WARNING: REALLY INEFFICIENT CODE!!!
-          ESTIMATED TIME TO RUN: 25mins
-  ================================================= 
-*/
-
-
 const fs = require('fs');
 
 let stdinBuffer = fs.readFileSync('./2019day14.txt');
@@ -49,23 +41,35 @@ let avail = 1000000000000;
 
 const fuelformula = recipes['FUEL'];
 
-let required = {}
+const req = () => {
+  let required = {};
 
-fuelformula.formula.forEach(form => {
-  required[form[1]] = form[0];
-});
+  fuelformula.formula.forEach(form => {
+    required[form[1]] = 0;
+  });
+  
+  return required;
+}
 
-const getMaterials = () => {
+const prepareFuel = (required, amt) => {
+  for (let i=0; i<amt; i++) fuelformula.formula.forEach(form => {
+    required[form[1]] += form[0];
+  });
+}
+
+const getMaterials = (required) => {
   return Object.keys(required).filter(mat => required[mat] > 0);
 }
 
-let mats = getMaterials();
+let low = 0;
+let high = 10000000; // rough estimation, should be less than 10 million estimating from examples
+let avg = Math.floor((high + low) / 2);;
 
-let used = 0;
+while (Math.abs(high - low) > 1 && low < high) {
+  let required = req();
+  prepareFuel(required, avg);
 
-let count = 0;
-
-while (used <= avail) {
+  let mats = getMaterials(required);
   while (mats.length > 1) {
     mats.forEach(mat => {
       if (mat == 'ORE') return;
@@ -75,32 +79,24 @@ while (used <= avail) {
       const amt = recp.amt * times;
   
       required[mat] -= amt;
-  
-      for (let i=0; i<times; i++) {
-        recp.formula.forEach(form => {
-          if (required.hasOwnProperty(form[1])) {
-            required[form[1]] += form[0];
-          }
-          else required[form[1]] = form[0];
-        });
-      }
+
+      // some optimisations
+      recp.formula.forEach(form => {
+        if (required.hasOwnProperty(form[1])) {
+          required[form[1]] += form[0] * times;
+        }
+        else required[form[1]] = form[0] * times;
+      });
     });
 
-    mats = getMaterials();
+    mats = getMaterials(required);
   }
 
-  // console.log(required['ORE']);
-  if (required['ORE'] > avail) break;
+  if (required['ORE'] > avail) high = avg;
+  else if (required['ORE'] < avail) low = avg;
+  else break;
 
-  used = required['ORE'];
-  
-  fuelformula.formula.forEach(form => {
-    required[form[1]] += form[0];
-  });
-  mats = getMaterials();
-
-  count++;
-  if (count % 50000 == 0) console.log(count);
+  avg = Math.floor((high + low) / 2);
 }
 
-console.log(count);
+console.log(avg);
